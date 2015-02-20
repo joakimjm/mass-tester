@@ -1,2 +1,2 @@
-# xtester
-A simple task for running xunit tests on mutiple project based on traits specified whether they're unit or integration tests.
+# MassTester
+A simple task for running and parallelizing xUnit tests on mutiple project based on trait grouping in order to separate fast unit tests from longer running integration tests.
