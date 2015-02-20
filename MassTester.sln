@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.31101.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTester", "MassTester\MassTester.csproj", "{F1036C00-E2DD-4358-99FB-2017412AF1C4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MassTester.Runner", "MassTester.Runner\MassTester.Runner.csproj", "{C9BA7C63-CE04-417E-8722-93012D043882}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F1036C00-E2DD-4358-99FB-2017412AF1C4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F1036C00-E2DD-4358-99FB-2017412AF1C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F1036C00-E2DD-4358-99FB-2017412AF1C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F1036C00-E2DD-4358-99FB-2017412AF1C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9BA7C63-CE04-417E-8722-93012D043882}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9BA7C63-CE04-417E-8722-93012D043882}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9BA7C63-CE04-417E-8722-93012D043882}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9BA7C63-CE04-417E-8722-93012D043882}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
