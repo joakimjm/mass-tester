@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -11,23 +12,18 @@ namespace MassTester.Runner
     {
         static void Main(string[] args)
         {
-            MainAsync(args).Wait();
+            MainAsync(new Arguments(args)).Wait();
         }
 
-        static async Task MainAsync(string[] args)
+        static async Task MainAsync(Arguments args)
         {
             /*
             * Find all projects ending in .Tests
             */
             var collection = new DirectoryInfo(Environment.CurrentDirectory).EnumerateFiles("*Tests.csproj", SearchOption.AllDirectories);
-            var xunitRunner = new FileInfo(args[0]);
-            var type = args[1];
+            var xunitRunner = GetXUnitRunnerFile(args["runner"]);
+            var type = args["type"];
             var tasks = new List<Task>();
-
-            if (!xunitRunner.Exists)
-            {
-                throw new FileNotFoundException("xUnit.net runner was not found at specified location: '{0}'", args[0]);
-            }
 
             foreach (var project in collection)
             {
@@ -48,18 +44,55 @@ namespace MassTester.Runner
                 tasks.Add(Task.Run(async () =>
                 {
                     var proc = new TestProcess(xunitRunner, assembly, type);
-                    return Task.FromResult(0);
-
                     await proc.StartAsync();
                 }));
             }
 
             await Task.WhenAll(tasks);
 
+            Console.WriteLine("Testing completed.");
+
             if (Environment.UserInteractive)
             {
                 Console.ReadKey();
             }
+        }
+
+        private static FileInfo GetXUnitRunnerFile(string specifiedPath)
+        {
+            var result = default(FileInfo);
+
+            if (!string.IsNullOrWhiteSpace(specifiedPath))
+            {
+                result = new FileInfo(specifiedPath);
+            }
+
+            if ((result == null || !result.Exists) && Directory.Exists("packages"))
+            {
+                result = new DirectoryInfo("packages")
+                    .EnumerateFiles("xunit.console.exe", SearchOption.AllDirectories)
+                    .FirstOrDefault();
+            }
+
+            if (result == null || !result.Exists)
+            {
+                if (!string.IsNullOrWhiteSpace(specifiedPath))
+                {
+                    throw new FileNotFoundException("xUnit.net runner was not located at specified path: '{0}'", specifiedPath);
+                }
+
+                throw new FileNotFoundException("xUnit.net runner couldn't be located. Please specify a path to the xUnit.net runner executable.");
+            }
+
+            var info = FileVersionInfo.GetVersionInfo(result.FullName);
+            if (info.FileDescription.ToLowerInvariant() != "xunit.net console test runner")
+            {
+                throw new ArgumentException("Specified file was not xunit runner");
+            }
+
+            Console.WriteLine("Using runner: {0}", result.FullName);
+            Console.WriteLine();
+            return result;
         }
     }
 }

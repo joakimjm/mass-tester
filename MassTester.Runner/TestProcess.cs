@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MassTester.Runner
@@ -30,39 +29,33 @@ namespace MassTester.Runner
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     RedirectStandardInput = true,
-                    ErrorDialog = false,
+                    ErrorDialog = false, //TODO: Write results xUnit 1.x XML for Jenkins' test report in solution folder /TestResults
                     Arguments = string.Format("\"{0}\" -trait \"type={1}\"", assembly, type)
                 }
             };
-
-            System.Console.WriteLine("Arguments: " + string.Format("\"{0}\" -trait \"type={1}\"", assembly, type));
         }
 
-        public async Task<string> StartAsync()
+        public async Task<int> StartAsync()
         {
-            var result = new TaskCompletionSource<string>();
-
-            var responseData = new StringBuilder();
-            var error = new StringBuilder();
+            var result = new TaskCompletionSource<int>();
 
             _process.OutputDataReceived += (obj, e) =>
             {
                 if (e.Data == null)
                 {
+                    result.TrySetResult(_process.ExitCode);
                     _process.Dispose();
-                    result.TrySetResult(responseData.ToString());
                     System.Console.WriteLine("{0} ended.", _assembly.Name);
                 }
                 else
                 {
-                    responseData.AppendLine(e.Data);
+                    System.Console.WriteLine(e.Data);
                 }
             };
 
             _process.ErrorDataReceived += (obj, e) =>
             {
                 System.Console.Error.WriteLine(e.Data);
-                error.AppendLine(e.Data);
             };
 
             _process.Start();
