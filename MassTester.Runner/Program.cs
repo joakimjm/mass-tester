@@ -46,17 +46,12 @@ namespace MassTester.Runner
 
                 /*
                  * project -> bin\{Configuration}\{AssemblyName}.dll
-                 * 
-                 * Configuration should be passed as argument. Default can be Debug, or whatever.
-                 * AssemblyName can be read through the project xml.
+                 * TODO: Read AssemblyName through the project's xml.
                  */
                 var assembly = project.Directory
                     .EnumerateFiles(projectName + ".dll", SearchOption.AllDirectories)
                     .Where(x => x.Directory.Name == configuration)
                     .First();
-
-                //Console.WriteLine("Starting: {0}.", projectName);
-                //continue;
 
                 tasks.Add(Task.Run(async () =>
                 {
@@ -68,11 +63,6 @@ namespace MassTester.Runner
             await Task.WhenAll(tasks);
 
             Console.WriteLine("Testing finished with code {0}.", Environment.ExitCode);
-
-            //if (Environment.UserInteractive)
-            //{
-            //    Console.ReadKey();
-            //}
         }
 
         private static FileInfo GetXUnitRunnerFile(string specifiedPath)
