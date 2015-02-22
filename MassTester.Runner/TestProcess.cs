@@ -48,11 +48,15 @@ namespace MassTester.Runner
                     {
                         Environment.ExitCode = _process.ExitCode;
 
-                        Console.Error.WriteLine("{0} failed.", _assembly.Name);
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Error.WriteLine("{0}: Failed with code {1}.", _assembly.Name, _process.ExitCode);
+                        Console.ForegroundColor = ConsoleColor.Gray;
                     }
                     else
                     {
-                        Console.WriteLine("{0} completed.", _assembly.Name);
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.WriteLine("{0}: Completed.", _assembly.Name);
+                        Console.ForegroundColor = ConsoleColor.Gray;
                     }
 
                     result.TrySetResult(_process.ExitCode);
@@ -60,13 +64,21 @@ namespace MassTester.Runner
                 }
                 else
                 {
-                    Console.WriteLine(e.Data);
+                    if (!string.IsNullOrWhiteSpace(e.Data))
+                    {
+                        Console.WriteLine("{0}: {1}", _assembly.Name, e.Data);
+                    }
                 }
             };
 
             _process.ErrorDataReceived += (obj, e) =>
             {
-                Console.Error.WriteLine(e.Data);
+                if (!string.IsNullOrWhiteSpace(e.Data))
+                {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
+                    Console.Error.WriteLine("{0}: {1}", _assembly.Name, e.Data);
+                    Console.ForegroundColor = ConsoleColor.Gray;
+                }
             };
 
             _process.Start();
