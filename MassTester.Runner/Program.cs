@@ -20,10 +20,24 @@ namespace MassTester.Runner
             /*
             * Find all projects ending in .Tests
             */
-            var collection = new DirectoryInfo(Environment.CurrentDirectory).EnumerateFiles("*Tests.csproj", SearchOption.AllDirectories);
+            var solutionDirectory = Environment.CurrentDirectory;
+            var collection = new DirectoryInfo(solutionDirectory).EnumerateFiles("*Tests.csproj", SearchOption.AllDirectories);
             var xunitRunner = GetXUnitRunnerFile(args["runner"]);
-            var type = args["type"];
+            var type = args["type"] ?? "unit";
+            var configuration = args["configuration"] ?? "Release";
             var tasks = new List<Task>();
+
+            #region Output header
+            Console.ForegroundColor = ConsoleColor.Cyan;
+            Console.WriteLine("Mass Tester started", xunitRunner.FullName);
+            Console.WriteLine("  Working dir   : {0}", solutionDirectory);
+            Console.WriteLine("  Test runner   : {0}", xunitRunner.FullName);
+            Console.WriteLine("  Type          : {0}", type);
+            Console.WriteLine("  Configuration : {0}", configuration);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.ForegroundColor = ConsoleColor.Gray;
+            #endregion
 
             foreach (var project in collection)
             {
@@ -36,9 +50,12 @@ namespace MassTester.Runner
                  * Configuration should be passed as argument. Default can be Debug, or whatever.
                  * AssemblyName can be read through the project xml.
                  */
-                var assembly = project.Directory.EnumerateFiles(projectName + ".dll", SearchOption.AllDirectories).First();
+                var assembly = project.Directory
+                    .EnumerateFiles(projectName + ".dll", SearchOption.AllDirectories)
+                    .Where(x => x.Directory.Name == configuration)
+                    .First();
 
-                Console.WriteLine("Starting: {0}.", projectName);
+                //Console.WriteLine("Starting: {0}.", projectName);
                 //continue;
 
                 tasks.Add(Task.Run(async () =>
@@ -50,12 +67,12 @@ namespace MassTester.Runner
 
             await Task.WhenAll(tasks);
 
-            Console.WriteLine("Testing completed.");
+            Console.WriteLine("Testing finished with code {0}.", Environment.ExitCode);
 
-            if (Environment.UserInteractive)
-            {
-                Console.ReadKey();
-            }
+            //if (Environment.UserInteractive)
+            //{
+            //    Console.ReadKey();
+            //}
         }
 
         private static FileInfo GetXUnitRunnerFile(string specifiedPath)
@@ -90,8 +107,6 @@ namespace MassTester.Runner
                 throw new ArgumentException("Specified file was not xunit runner");
             }
 
-            Console.WriteLine("Using runner: {0}", result.FullName);
-            Console.WriteLine();
             return result;
         }
     }
