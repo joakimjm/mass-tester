@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -13,7 +14,7 @@ namespace MassTester.Runner
         {
             if (!xunitRunner.Exists)
             {
-                throw new System.IO.FileNotFoundException("File path to Command Line Administrative Interface Administration is invalid.");
+                throw new FileNotFoundException("File path to Command Line Administrative Interface Administration is invalid.");
             }
 
             _assembly = assembly;
@@ -43,19 +44,29 @@ namespace MassTester.Runner
             {
                 if (e.Data == null)
                 {
+                    if (_process.ExitCode != 0)
+                    {
+                        Environment.ExitCode = _process.ExitCode;
+
+                        Console.Error.WriteLine("{0} failed.", _assembly.Name);
+                    }
+                    else
+                    {
+                        Console.WriteLine("{0} completed.", _assembly.Name);
+                    }
+
                     result.TrySetResult(_process.ExitCode);
                     _process.Dispose();
-                    System.Console.WriteLine("{0} ended.", _assembly.Name);
                 }
                 else
                 {
-                    System.Console.WriteLine(e.Data);
+                    Console.WriteLine(e.Data);
                 }
             };
 
             _process.ErrorDataReceived += (obj, e) =>
             {
-                System.Console.Error.WriteLine(e.Data);
+                Console.Error.WriteLine(e.Data);
             };
 
             _process.Start();
