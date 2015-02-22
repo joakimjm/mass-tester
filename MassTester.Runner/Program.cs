@@ -3,19 +3,40 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace MassTester.Runner
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        #region Capture console event handler
+
+        //As per http://stackoverflow.com/questions/474679/capture-console-exit-c-sharp
+        [DllImport("Kernel32")]
+        private static extern bool SetConsoleCtrlHandler(EventHandler handler, bool add);
+
+        private delegate bool EventHandler(CtrlType sig);
+
+        private static EventHandler _handler;
+
+        #endregion Capture console event handler
+
+        private enum CtrlType
+        {
+            CTRL_C_EVENT = 0,
+            CTRL_BREAK_EVENT = 1,
+            CTRL_CLOSE_EVENT = 2,
+            CTRL_LOGOFF_EVENT = 5,
+            CTRL_SHUTDOWN_EVENT = 6
+        }
+
+        private static void Main(string[] args)
         {
             MainAsync(new Arguments(args)).Wait();
         }
 
-        static async Task MainAsync(Arguments args)
+        private static async Task MainAsync(Arguments args)
         {
             /*
             * Find all projects ending in .Tests
@@ -28,6 +49,7 @@ namespace MassTester.Runner
             var tasks = new List<Task>();
 
             #region Output header
+
             Console.ForegroundColor = ConsoleColor.Cyan;
             Console.WriteLine("Mass Tester started", xunitRunner.FullName);
             Console.WriteLine("  Working dir   : {0}", solutionDirectory);
@@ -37,7 +59,8 @@ namespace MassTester.Runner
             Console.WriteLine();
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Gray;
-            #endregion
+
+            #endregion Output header
 
             foreach (var project in collection)
             {
@@ -56,6 +79,28 @@ namespace MassTester.Runner
                 tasks.Add(Task.Run(async () =>
                 {
                     var proc = new TestProcess(xunitRunner, assembly, type);
+
+                    /*
+                     * Hook onto the captured console event handler,
+                     * in order to close running processes in case
+                     * Mass Tester exits unexpectedly.
+                     */
+                    _handler += new EventHandler((sig) =>
+                    {
+                        switch (sig)
+                        {
+                            case CtrlType.CTRL_C_EVENT:
+                            //case CtrlType.CTRL_LOGOFF_EVENT:
+                            //case CtrlType.CTRL_SHUTDOWN_EVENT:
+                            case CtrlType.CTRL_CLOSE_EVENT:
+                            default:
+                                proc.Kill();
+                                return false;
+                        }
+                    });
+                    SetConsoleCtrlHandler(_handler, true);
+
+                    //Start the process.
                     await proc.StartAsync();
                 }));
             }
@@ -65,6 +110,11 @@ namespace MassTester.Runner
             Console.WriteLine("Testing finished with code {0}.", Environment.ExitCode);
         }
 
+        /// <summary>
+        /// Locate the xUnit.net console runner.
+        /// </summary>
+        /// <param name="specifiedPath">A path specified through an argument.</param>
+        /// <returns></returns>
         private static FileInfo GetXUnitRunnerFile(string specifiedPath)
         {
             var result = default(FileInfo);
@@ -76,6 +126,7 @@ namespace MassTester.Runner
 
             if ((result == null || !result.Exists) && Directory.Exists("packages"))
             {
+                //Try to look for it inside the NuGet packages.
                 result = new DirectoryInfo("packages")
                     .EnumerateFiles("xunit.console.exe", SearchOption.AllDirectories)
                     .FirstOrDefault();
@@ -91,6 +142,10 @@ namespace MassTester.Runner
                 throw new FileNotFoundException("xUnit.net runner couldn't be located. Please specify a path to the xUnit.net runner executable.");
             }
 
+            /*
+             * Attempt to verify that the file is actually an xUnit.net runner
+             * by looking at the file's meta data.
+             */
             var info = FileVersionInfo.GetVersionInfo(result.FullName);
             if (info.FileDescription.ToLowerInvariant() != "xunit.net console test runner")
             {

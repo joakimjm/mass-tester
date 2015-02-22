@@ -36,6 +36,21 @@ namespace MassTester.Runner
             };
         }
 
+        /// <summary>
+        /// Kill the process if it hasn't already exited.
+        /// </summary>
+        public void Kill()
+        {
+            try
+            {
+                if (!_process.HasExited)
+                {
+                    _process.Kill();
+                }
+            }
+            catch { /*Getting here is most likely due to the object already being disposed, which is nice at this point.*/ }
+        }
+
         public async Task<int> StartAsync()
         {
             var result = new TaskCompletionSource<int>();
