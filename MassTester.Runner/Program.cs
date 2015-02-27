@@ -56,7 +56,7 @@ namespace MassTester.Runner
             Console.WriteLine("Mass Tester started", xunitRunner.FullName);
             Console.WriteLine("  Working dir   : {0}", solutionDirectory);
             Console.WriteLine("  Test runner   : {0}", xunitRunner.FullName);
-            Console.WriteLine("  Test Type     : {0}", type);
+            Console.WriteLine("  Test Type     : {0}", !string.IsNullOrWhiteSpace(type) ? "[NONE SPECIFIED]" : type);
             Console.WriteLine("  Output format : {0}", config.GetOutputFormat());
             Console.WriteLine("  Configuration : {0}", configuration);
             Console.WriteLine();
@@ -66,7 +66,7 @@ namespace MassTester.Runner
             #endregion Output header
 
 
-            var outputDir = Path.Combine(solutionDirectory, "TestResults");
+            var outputDir = Path.Combine(solutionDirectory, "TestResults", type);
 
             if (!Directory.Exists(outputDir))
             {
