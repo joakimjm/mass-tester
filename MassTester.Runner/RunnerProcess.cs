@@ -5,12 +5,12 @@ using System.Threading.Tasks;
 
 namespace MassTester.Runner
 {
-    internal class TestProcess
+    internal class RunnerProcess
     {
         private Process _process;
         private FileInfo _assembly;
 
-        public TestProcess(FileInfo xunitRunner, FileInfo assembly, string type)
+        public RunnerProcess(FileInfo xunitRunner, FileInfo assembly, string outputFormat, string outputFilePath, string testType)
         {
             if (!xunitRunner.Exists)
             {
@@ -19,6 +19,14 @@ namespace MassTester.Runner
 
             _assembly = assembly;
 
+            var argument = string.Format("\"{0}\" -{1} \"{2}\"", assembly, outputFormat, outputFilePath);
+
+            if (!string.IsNullOrWhiteSpace(testType))
+            {
+                argument = string.Format("{0} -trait \"type={1}\"", argument, testType);
+            }
+
+            Console.WriteLine("{0} argument: {1}", _assembly.Name, argument);
             _process = new Process
             {
                 StartInfo = new ProcessStartInfo
@@ -30,8 +38,8 @@ namespace MassTester.Runner
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     RedirectStandardInput = true,
-                    ErrorDialog = false, //TODO: Write results xUnit 1.x XML for Jenkins' test report in solution folder /TestResults
-                    Arguments = string.Format("\"{0}\" -trait \"type={1}\"", assembly, type)
+                    ErrorDialog = false,
+                    Arguments = argument
                 }
             };
         }

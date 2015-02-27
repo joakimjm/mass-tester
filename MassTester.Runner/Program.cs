@@ -38,13 +38,15 @@ namespace MassTester.Runner
 
         private static async Task MainAsync(Arguments args)
         {
+            var config = new AppConfig();
+
             /*
             * Find all projects ending in .Tests
             */
             var solutionDirectory = Environment.CurrentDirectory;
             var collection = new DirectoryInfo(solutionDirectory).EnumerateFiles("*Tests.csproj", SearchOption.AllDirectories);
             var xunitRunner = GetXUnitRunnerFile(args["runner"]);
-            var type = args["type"] ?? "unit";
+            var type = args["type"];
             var configuration = args["configuration"] ?? "Release";
             var tasks = new List<Task>();
 
@@ -54,13 +56,22 @@ namespace MassTester.Runner
             Console.WriteLine("Mass Tester started", xunitRunner.FullName);
             Console.WriteLine("  Working dir   : {0}", solutionDirectory);
             Console.WriteLine("  Test runner   : {0}", xunitRunner.FullName);
-            Console.WriteLine("  Type          : {0}", type);
+            Console.WriteLine("  Test Type     : {0}", type);
+            Console.WriteLine("  Output format : {0}", config.GetOutputFormat());
             Console.WriteLine("  Configuration : {0}", configuration);
             Console.WriteLine();
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Gray;
 
             #endregion Output header
+
+
+            var outputDir = Path.Combine(solutionDirectory, "TestResults");
+
+            if (!Directory.Exists(outputDir))
+            {
+                Directory.CreateDirectory(outputDir);
+            }
 
             foreach (var project in collection)
             {
@@ -78,7 +89,10 @@ namespace MassTester.Runner
 
                 tasks.Add(Task.Run(async () =>
                 {
-                    var proc = new TestProcess(xunitRunner, assembly, type);
+                    //{SolutionDir}\TestResults\{ProjectName}.xml
+                    var resultPath = Path.Combine(outputDir, projectName + ".xml");
+
+                    var proc = new RunnerProcess(xunitRunner, assembly, config.GetOutputFormat(), resultPath, type);
 
                     /*
                      * Hook onto the captured console event handler,
@@ -107,7 +121,12 @@ namespace MassTester.Runner
 
             await Task.WhenAll(tasks);
 
-            Console.WriteLine("Testing finished with code {0}.", Environment.ExitCode);
+            if (Environment.ExitCode > 0)
+            {
+                Console.WriteLine("Some tests failed.");
+            }
+
+
         }
 
         /// <summary>
