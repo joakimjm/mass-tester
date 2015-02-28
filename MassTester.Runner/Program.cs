@@ -85,7 +85,13 @@ namespace MassTester.Runner
                 var assembly = project.Directory
                     .EnumerateFiles(projectName + ".dll", SearchOption.AllDirectories)
                     .Where(x => x.Directory.Name == configuration)
-                    .First();
+                    .FirstOrDefault();
+
+                if (assembly == null)
+                {
+                    //No assembly for this configuration
+                    continue;
+                }
 
                 tasks.Add(Task.Run(async () =>
                 {
